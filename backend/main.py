@@ -44,7 +44,7 @@ def read_resume(path: Path) -> str:
 
 @lru_cache(maxsize=1)
 def get_groq_client() -> Groq:
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = (os.getenv("GROQ_API_KEY") or "").strip().strip('"').strip("'")
     if not api_key:
         raise HTTPException(status_code=503, detail="GROQ_API_KEY is not configured.")
     return Groq(api_key=api_key)
@@ -109,5 +109,5 @@ Resume:
     except APIError as exc:
         raise HTTPException(
             status_code=502,
-            detail=f"{type(exc).__name__}: {exc} | cause: {exc.__cause__!r}",
+            detail="The AI provider could not complete the request.",
         ) from exc
