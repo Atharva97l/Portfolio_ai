@@ -1,3 +1,4 @@
+import logging
 import os
 from contextlib import asynccontextmanager
 from functools import lru_cache
@@ -12,7 +13,6 @@ from fastapi.staticfiles import StaticFiles
 from groq import APIError, Groq
 from pydantic import BaseModel, Field
 
-import logging
 logger = logging.getLogger("uvicorn.error")
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +21,7 @@ RESUME_PATH = Path(__file__).resolve().with_name("Atharva_Kulkarni_Resume_Starte
 GITHUB_URL = "https://github.com/Atharva97l"
 
 load_dotenv(PROJECT_DIR / ".env")
-MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+MODEL = (os.getenv("GROQ_MODEL") or "openai/gpt-oss-120b").strip()
 
 
 def read_resume(path: Path) -> str:
@@ -106,12 +106,23 @@ Resume:
                 {"role": "user", "content": request.question},
             ],
         )
+    except HTTPException:
+        raise  # e.g. 503 missing key; don't let the catch-all turn it into a 500
     except APIError as exc:
+        logger.error("Groq API error: %s: %s | cause=%r", type(exc).__name__, exc, exc.__cause__)
         raise HTTPException(
             status_code=502,
             detail="The AI provider could not complete the request.",
         ) from exc
-    except Exception as exc:
+    except Exception:
+        logger.exception("Unexpected error in /chat")
+        raise HTTPException(status_code=500, detail="Unexpected server error.")
+
+    answer = response.choices[0].message.content
+    if not answer:
+        raise HTTPException(status_code=502, detail="The AI provider returned an empty response.")
+
+    return {"answer": answer}
         raise HTTPException(
             status_code=500,
             detail=f"{type(exc).__name__}: {str(exc)[:200]}",
