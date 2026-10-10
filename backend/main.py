@@ -109,5 +109,5 @@ Resume:
     except APIError as exc:
         raise HTTPException(
             status_code=502,
-            detail=f"{type(exc).__name__}: {exc}",
+            detail=f"{type(exc).__name__}: {exc} | cause: {exc.__cause__!r}",
         ) from exc
