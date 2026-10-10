@@ -12,6 +12,9 @@ from fastapi.staticfiles import StaticFiles
 from groq import APIError, Groq
 from pydantic import BaseModel, Field
 
+import logging
+logger = logging.getLogger("uvicorn.error")
+
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = PROJECT_DIR / "frontend"
 RESUME_PATH = Path(__file__).resolve().with_name("Atharva_Kulkarni_Resume_Starter.docx")
@@ -104,13 +107,8 @@ Resume:
             ],
         )
     except APIError as exc:
+        logger.error("Groq error: %s | %r", type(exc).__name__, exc)
         raise HTTPException(
             status_code=502,
             detail="The AI provider could not complete the request.",
         ) from exc
-
-    answer = response.choices[0].message.content
-    if not answer:
-        raise HTTPException(status_code=502, detail="The AI provider returned an empty response.")
-
-    return {"answer": answer}
