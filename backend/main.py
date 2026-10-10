@@ -123,7 +123,3 @@ Resume:
         raise HTTPException(status_code=502, detail="The AI provider returned an empty response.")
 
     return {"answer": answer}
-        raise HTTPException(
-            status_code=500,
-            detail=f"{type(exc).__name__}: {str(exc)[:200]}",
-        ) from exc
