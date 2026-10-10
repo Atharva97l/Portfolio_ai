@@ -111,3 +111,8 @@ Resume:
             status_code=502,
             detail="The AI provider could not complete the request.",
         ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"{type(exc).__name__}: {str(exc)[:200]}",
+        ) from exc
