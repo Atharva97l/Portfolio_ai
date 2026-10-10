@@ -107,8 +107,7 @@ Resume:
             ],
         )
     except APIError as exc:
-        logger.error("Groq error: %s | %r", type(exc).__name__, exc)
         raise HTTPException(
             status_code=502,
-            detail="The AI provider could not complete the request.",
+            detail=f"{type(exc).__name__}: {exc}",
         ) from exc
